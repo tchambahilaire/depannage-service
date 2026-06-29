@@ -1,8 +1,11 @@
+cat > ~/depannage-app/package.json << 'EOF'
 {
   "name": "depannage-service",
   "version": "1.0.0",
+  "description": "Depannage Service - Application de depannage",
   "scripts": {
-    "start": "node backend/src/app.js"
+    "start": "node backend/src/app.js",
+    "vercel-build": "echo 'Build completed'"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -12,6 +15,6 @@
     "jsonwebtoken": "^9.0.0"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   }
-}
+}EOF

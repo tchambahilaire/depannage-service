@@ -4,20 +4,17 @@
     {
       "src": "backend/src/app.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "backend/public/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "backend/src/app.js"
-    },
-    {
       "src": "/(.*)",
-      "dest": "backend/public/index.html"
+      "dest": "backend/src/app.js"
     }
-  ]
+  ],
+  "functions": {
+    "backend/src/app.js": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
