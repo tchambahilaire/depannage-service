@@ -1,0 +1,2198 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Depannage Service - Solution Complete</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            padding: 20px;
+            transition: 0.3s;
+        }
+        body.dark-mode {
+            background: url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+        }
+        body.dark-mode::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 0;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 30px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+        body.dark-mode .card {
+            background: #1e1e2e;
+            color: white;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-icon {
+            font-size: 60px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3 {
+            color: white;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+            background: #2a2a3e;
+            color: white;
+            border-color: #444;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        button:hover { transform: scale(1.02); }
+        .btn-danger { background: linear-gradient(135deg, #ff4757, #ff6b81); }
+        .btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .role-buttons { display: flex; gap: 15px; margin: 20px 0; }
+        .role-btn {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        body.dark-mode .role-btn { background: #2a2a3e; color: white; }
+        .role-btn.selected { background: linear-gradient(135deg, #ff6b35, #f7931e); color: white; }
+        .link { text-align: center; margin-top: 15px; color: #ff6b35; cursor: pointer; }
+        .hidden { display: none; }
+        .message { padding: 10px; margin-top: 15px; border-radius: 10px; text-align: center; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        body.dark-mode .header { background: #1e1e2e; color: white; }
+        .stats { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+        .stat-card {
+            flex: 1;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .service-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
+        .service-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.3s;
+        }
+        body.dark-mode .service-card { background: #2a2a3e; color: white; }
+        .service-card.selected { border-color: #ff6b35; background: #fff5f0; }
+        .price { font-size: 24px; font-weight: bold; color: #ff6b35; }
+        .emergency-btn {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            padding: 20px;
+            font-size: 20px;
+            margin: 20px 0;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        .mechanic-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        body.dark-mode .mechanic-item { background: #2a2a3e; color: white; }
+        .mechanic-item:hover { transform: translateX(5px); }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 12px;
+            border-radius: 30px;
+            text-align: center;
+            z-index: 100;
+        }
+        .payment-methods { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+        .payment-method {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        body.dark-mode .payment-method { background: #2a2a3e; color: white; }
+        .payment-method.selected { border-color: #ff6b35; background: #fff5f0; }
+        .tracking-map { height: 300px; border-radius: 20px; margin: 15px 0; }
+        .lang-selector { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        .lang-btn { width: auto; padding: 8px 15px; background: #f0f0f0; margin: 0; }
+        .lang-btn.active { background: #ff6b35; color: white; }
+        .chat-container {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        body.dark-mode .chat-container { background: #2a2a3e; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; }
+        .chat-message { margin-bottom: 10px; display: flex; }
+        .chat-message.sent { justify-content: flex-end; }
+        .message-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            background: #ff6b35;
+            color: white;
+        }
+        .message-bubble.received { background: #e0e0e0; color: #333; }
+        .chat-input { display: flex; padding: 10px; background: white; gap: 10px; }
+        body.dark-mode .chat-input { background: #1e1e2e; }
+        .chat-input input { flex: 1; margin: 0; }
+        .chat-input button { width: auto; padding: 12px 20px; margin: 0; }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background: #1a1a2e;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+        }
+        .parts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .part-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+        }
+        body.dark-mode .part-card { background: #2a2a3e; }
+        .verification-badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 10px; }
+        .verified { background: #d4edda; color: #155724; }
+        .pending { background: #fff3cd; color: #856404; }
+        .admin-tabs { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        .admin-tab {
+            flex: 1;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .admin-tab.active { background: #ff6b35; color: white; }
+        .log-entry {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        body.dark-mode .log-entry { background: #2a2a3e; }
+        .share-btn { background: #25D366; }
+        .widget-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #ff6b35;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .guest-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+        }
+        .loyalty-points {
+            background: #fbbf24;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .notification-item {
+            border-left: 4px solid #22c55e;
+            margin-bottom: 10px;
+        }
+        .notification-urgent { border-left-color: #ef4444; }
+        .notification-broadcast { border-left-color: #f59e0b; }
+        .rating-stars { display: flex; gap: 5px; justify-content: center; margin: 10px 0; }
+        .star { font-size: 24px; cursor: pointer; color: #ddd; }
+        .star.active { color: #fbbf24; }
+        .company-badge { background: #8b5cf6; color: white; padding: 5px 10px; border-radius: 20px; font-size: 10px; }
+        .fleet-item { background: #f8f9fa; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .theme-selector { display: flex; gap: 10px; flex-wrap: wrap; }
+        .theme-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+        .theme-btn.active { border-color: #ff6b35; }
+        .badge-notification { background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; margin-left: 5px; }
+        .enterprise-card { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 20px; border-radius: 20px; margin: 15px 0; }
+        .scan-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 80px;
+            border: 3px solid #ff6b35;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255,107,53,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app"></div>
+    <div id="toast" class="toast hidden"></div>
+    <div id="widgetBtn" class="widget-btn" onclick="quickAccess()" style="display:none;">
+        <i class="fas fa-bolt"></i>
+    </div>
+
+    <script>
+        // ============ CONFIGURATION ============
+        let currentUser = null;
+        let selectedRole = 'driver';
+        let isLogin = true;
+        let selectedService = 'batterie';
+        let selectedPrice = 5000;
+        let selectedPayment = 'orange_money';
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        let currentLanguage = localStorage.getItem('language') || 'fr';
+        let trackingInterval = null;
+        let activeChat = 'driver';
+        let isGuestMode = false;
+        
+        // ============ DONNEES STOCKEES ============
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+        let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        let chatNotifications = JSON.parse(localStorage.getItem('chatNotifications') || '[]');
+        let driverMessages = JSON.parse(localStorage.getItem('driver_messages') || '[]');
+        let mechanicMessages = JSON.parse(localStorage.getItem('mechanic_messages') || '[]');
+        let pendingVerifications = JSON.parse(localStorage.getItem('pendingVerifications') || '[]');
+        let supportTickets = JSON.parse(localStorage.getItem('supportTickets') || '[]');
+        let bannedUsers = JSON.parse(localStorage.getItem('bannedUsers') || '[]');
+        let invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+        let loyaltyPoints = JSON.parse(localStorage.getItem('loyaltyPoints') || '{}');
+        let reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
+        let fleetVehicles = JSON.parse(localStorage.getItem('fleetVehicles') || '[]');
+        let employeeList = JSON.parse(localStorage.getItem('employeeList') || '[]');
+        let reports = JSON.parse(localStorage.getItem('reports') || '[]');
+        let emergencyContacts = JSON.parse(localStorage.getItem('emergencyContacts') || '[]');
+        let twoFactorAuth = JSON.parse(localStorage.getItem('twoFactorAuth') || '{}');
+        let cloudBackup = JSON.parse(localStorage.getItem('cloudBackup') || '{}');
+        let insurancePolicies = JSON.parse(localStorage.getItem('insurancePolicies') || '[]');
+        let plateScans = JSON.parse(localStorage.getItem('plateScans') || '[]');
+        let paymentHistory = JSON.parse(localStorage.getItem('paymentHistory') || '[]');
+        let cniScans = JSON.parse(localStorage.getItem('cniScans') || '[]');
+        
+        // ============ PROMOTIONS ============
+        let promotions = [
+            { code: 'BIENVENUE10', discount: 10, description: '10% sur votre premiere intervention' },
+            { code: 'PARRAIN20', discount: 20, description: '20% pour vous et votre ami' },
+            { code: 'FIDELITE50', discount: 50, description: '50% apres 5 interventions', pointsRequired: 500 },
+            { code: 'URGENCE15', discount: 15, description: '15% pour les appels durgence' }
+        ];
+        
+        // ============ CATALOGUE PIECES ============
+        const partsCatalog = [
+            { id: 1, name: 'Batterie 12V', price: 25000, icon: 'fas fa-bolt', stock: 10, brand: 'VARTA' },
+            { id: 2, name: 'Pneu Michelin', price: 35000, icon: 'fas fa-circle', stock: 8, brand: 'Michelin' },
+            { id: 3, name: 'Huile moteur 5L', price: 12000, icon: 'fas fa-oil-can', stock: 15, brand: 'Total' },
+            { id: 4, name: 'Plaquettes frein', price: 8000, icon: 'fas fa-stop', stock: 12, brand: 'Bosch' },
+            { id: 5, name: 'Filtre a huile', price: 3000, icon: 'fas fa-filter', stock: 20, brand: 'Mann' },
+            { id: 6, name: 'Alternateur', price: 45000, icon: 'fas fa-cog', stock: 5, brand: 'Valeo' }
+        ];
+        
+        // ============ TRADUCTIONS ============
+        const translations = {
+            fr: {
+                title: "Depannage Service", driver: "Chauffeur", mechanic: "Mecanicien",
+                phone: "Telephone", password: "Mot de passe", login: "Se connecter",
+                register: "S'inscrire", forgot: "Mot de passe oublie ?", createAccount: "Creer un compte",
+                back: "Retour", emergency: "Appel d'urgence", sos: "SOS Urgence",
+                tracking: "Suivi GPS", chat: "Discussion", support: "Support",
+                parts: "Pieces detachees", verify: "Verification", promo: "Promotions",
+                invoice: "Factures", darkMode: "Mode nuit", language: "Langue",
+                guest: "Mode invite", share: "Partager", loyalty: "Fidelite", reviews: "Avis",
+                notifications: "Notifications", theme: "Theme", security: "Securite",
+                enterprise: "Entreprise", fleet: "Flotte", employees: "Employes",
+                reports: "Rapports", alerts: "Alertes", settings: "Parametres"
+            },
+            en: {
+                title: "Breakdown Service", driver: "Driver", mechanic: "Mechanic",
+                phone: "Phone", password: "Password", login: "Login",
+                register: "Register", forgot: "Forgot password?", createAccount: "Create account",
+                back: "Back", emergency: "Emergency call", sos: "SOS Emergency",
+                tracking: "GPS Tracking", chat: "Discussion", support: "Support",
+                parts: "Spare parts", verify: "Verification", promo: "Promotions",
+                invoice: "Invoices", darkMode: "Dark mode", language: "Language",
+                guest: "Guest mode", share: "Share", loyalty: "Loyalty", reviews: "Reviews",
+                notifications: "Notifications", theme: "Theme", security: "Security",
+                enterprise: "Enterprise", fleet: "Fleet", employees: "Employees",
+                reports: "Reports", alerts: "Alerts", settings: "Settings"
+            }
+        };
+        
+        function t(key) { return translations[currentLanguage][key] || key; }
+        
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.background = isError ? '#dc2626' : '#333';
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+        
+        function addNotification(title, message, type = 'info') {
+            notifications.unshift({ id: Date.now(), title, message, type, date: new Date().toLocaleString(), read: false });
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            showToast('Notification: ' + title);
+            playNotificationSound();
+        }
+        
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                audio.volume = 0.2;
+                audio.play().catch(e => console.log('Son non joue'));
+            } catch(e) {}
+        }
+        
+        // ============ DOUBLE IDENTIFICATION ============
+        let verificationCode = null;
+        let verificationPhone = null;
+
+        function sendVerificationCode(phone) {
+            verificationCode = Math.floor(100000 + Math.random() * 900000);
+            verificationPhone = phone;
+            showToast('📱 Code de verification envoye a ' + phone);
+            addNotification('Verification', 'Code envoye a ' + phone, 'info');
+            console.log('🔑 Code de verification:', verificationCode);
+            return verificationCode;
+        }
+
+        function verifyCode(enteredCode) {
+            if (parseInt(enteredCode) === verificationCode) {
+                verificationCode = null;
+                return true;
+            }
+            return false;
+        }
+
+        // ============ SCAN DE LA CNI ============
+        function scanCNI() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(function(stream) {
+                        const video = document.createElement('video');
+                        video.srcObject = stream;
+                        video.autoplay = true;
+                        video.style.width = '100%';
+                        video.style.height = '400px';
+                        video.style.borderRadius = '15px';
+                        video.style.objectFit = 'cover';
+                        
+                        const container = document.createElement('div');
+                        container.style.position = 'fixed';
+                        container.style.top = '0';
+                        container.style.left = '0';
+                        container.style.right = '0';
+                        container.style.bottom = '0';
+                        container.style.background = 'rgba(0,0,0,0.9)';
+                        container.style.zIndex = '1000';
+                        container.style.display = 'flex';
+                        container.style.flexDirection = 'column';
+                        container.style.alignItems = 'center';
+                        container.style.justifyContent = 'center';
+                        container.style.padding = '20px';
+                        
+                        const videoWrapper = document.createElement('div');
+                        videoWrapper.style.width = '100%';
+                        videoWrapper.style.maxWidth = '400px';
+                        videoWrapper.style.position = 'relative';
+                        videoWrapper.appendChild(video);
+                        
+                        const frame = document.createElement('div');
+                        frame.style.position = 'absolute';
+                        frame.style.top = '50%';
+                        frame.style.left = '50%';
+                        frame.style.transform = 'translate(-50%, -50%)';
+                        frame.style.width = '300px';
+                        frame.style.height = '180px';
+                        frame.style.border = '3px solid #ff6b35';
+                        frame.style.borderRadius = '10px';
+                        frame.style.boxShadow = '0 0 30px rgba(255,107,53,0.3)';
+                        videoWrapper.appendChild(frame);
+                        
+                        const instructions = document.createElement('p');
+                        instructions.textContent = 'Placez votre CNI dans le cadre';
+                        instructions.style.color = 'white';
+                        instructions.style.marginTop = '15px';
+                        instructions.style.fontSize = '16px';
+                        
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.style.display = 'flex';
+                        buttonContainer.style.gap = '15px';
+                        buttonContainer.style.marginTop = '20px';
+                        buttonContainer.style.width = '100%';
+                        buttonContainer.style.maxWidth = '400px';
+                        
+                        const captureBtn = document.createElement('button');
+                        captureBtn.textContent = 'CAPTURER LA CNI';
+                        captureBtn.style.flex = '1';
+                        captureBtn.style.padding = '15px';
+                        captureBtn.style.background = '#ff6b35';
+                        captureBtn.style.color = 'white';
+                        captureBtn.style.border = 'none';
+                        captureBtn.style.borderRadius = '15px';
+                        captureBtn.style.fontWeight = 'bold';
+                        captureBtn.style.cursor = 'pointer';
+                        
+                        const cancelBtn = document.createElement('button');
+                        cancelBtn.textContent = 'ANNULER';
+                        cancelBtn.style.flex = '1';
+                        cancelBtn.style.padding = '15px';
+                        cancelBtn.style.background = '#dc2626';
+                        cancelBtn.style.color = 'white';
+                        cancelBtn.style.border = 'none';
+                        cancelBtn.style.borderRadius = '15px';
+                        cancelBtn.style.fontWeight = 'bold';
+                        cancelBtn.style.cursor = 'pointer';
+                        
+                        buttonContainer.appendChild(captureBtn);
+                        buttonContainer.appendChild(cancelBtn);
+                        
+                        container.appendChild(videoWrapper);
+                        container.appendChild(instructions);
+                        container.appendChild(buttonContainer);
+                        document.body.appendChild(container);
+                        
+                        captureBtn.onclick = function() {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            const cniNumber = prompt('🔑 Entrez le numero de la CNI detecte:');
+                            if (cniNumber) {
+                                const cniData = {
+                                    id: Date.now(),
+                                    number: cniNumber,
+                                    name: prompt('Nom complet sur la CNI:'),
+                                    birthDate: prompt('Date de naissance:'),
+                                    issueDate: prompt('Date de delivrance:'),
+                                    image: canvas.toDataURL('image/jpeg'),
+                                    date: new Date().toLocaleString()
+                                };
+                                cniScans.push(cniData);
+                                localStorage.setItem('cniScans', JSON.stringify(cniScans));
+                                showToast('✅ CNI enregistree avec succes');
+                                addNotification('CNI scannée', 'CNI ' + cniNumber + ' enregistree', 'success');
+                                const cniInput = document.getElementById('regCNI');
+                                if (cniInput) cniInput.value = cniNumber;
+                            }
+                            stream.getTracks().forEach(track => track.stop());
+                            document.body.removeChild(container);
+                            refreshUI();
+                        };
+                        
+                        cancelBtn.onclick = function() {
+                            stream.getTracks().forEach(track => track.stop());
+                            document.body.removeChild(container);
+                            refreshUI();
+                        };
+                        
+                        document.addEventListener('keydown', function escHandler(e) {
+                            if (e.key === 'Escape') {
+                                stream.getTracks().forEach(track => track.stop());
+                                document.body.removeChild(container);
+                                document.removeEventListener('keydown', escHandler);
+                                refreshUI();
+                            }
+                        });
+                    })
+                    .catch(function(err) {
+                        showToast('❌ Impossible d acceder a la camera', true);
+                        const cniNumber = prompt('🔑 Entrez votre numero de CNI:');
+                        if (cniNumber) {
+                            const cniInput = document.getElementById('regCNI');
+                            if (cniInput) cniInput.value = cniNumber;
+                            showToast('✅ CNI enregistree');
+                        }
+                    });
+            } else {
+                showToast('📱 Camera non disponible - Saisie manuelle', true);
+                const cniNumber = prompt('🔑 Entrez votre numero de CNI:');
+                if (cniNumber) {
+                    const cniInput = document.getElementById('regCNI');
+                    if (cniInput) cniInput.value = cniNumber;
+                    showToast('✅ CNI enregistree');
+                }
+            }
+        }
+
+        function showCNIHistory() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-id-card"></i></div>
+                        <h1>CNI Scannees</h1>
+                    </div>
+                    ${cniScans.length === 0 ? '<p>Aucune CNI scannée</p>' : cniScans.slice().reverse().map(c => `
+                        <div class="log-entry">
+                            <strong>${c.name}</strong><br>
+                            CNI: ${c.number}<br>
+                            Ne(e) le: ${c.birthDate}<br>
+                            Delivree le: ${c.issueDate}<br>
+                            <small>${c.date}</small>
+                            ${c.image ? '<button onclick="viewCNI(' + c.id + ')" style="width:auto; padding:5px 10px;">Voir</button>' : ''}
+                        </div>
+                    `).join('')}
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function viewCNI(id) {
+            const cni = cniScans.find(c => c.id === id);
+            if (cni && cni.image) {
+                const win = window.open('', '_blank');
+                win.document.write('<html><head><title>CNI scannée</title></head><body style="display:flex; justify-content:center; align-items:center; height:100vh; margin:0; background:#1a1a2e;">');
+                win.document.write('<img src="' + cni.image + '" style="max-width:100%; max-height:100%; border-radius:15px;">');
+                win.document.write('</body></html>');
+                win.document.close();
+            } else {
+                showToast('Image non disponible', true);
+            }
+        }
+
+        // ============ MODIFICATION DE L'INSCRIPTION ============
+        function register() {
+            const phone = document.getElementById('regPhone')?.value;
+            const password = document.getElementById('regPassword')?.value;
+            const name = document.getElementById('regName')?.value;
+            const cniNumber = document.getElementById('regCNI')?.value;
+            const role = document.querySelector('#registerScreen .role-btn.selected')?.innerText.includes('Chauffeur') ? 'driver' : 'mechanic';
+            
+            if (!phone || !password || !name) {
+                showToast("Remplissez tous les champs", true);
+                return;
+            }
+            if (!cniNumber || cniNumber.length < 5) {
+                showToast("Veuillez scanner ou entrer votre CNI", true);
+                return;
+            }
+            if (bannedUsers.includes(phone)) {
+                showToast("Ce numero est banni", true);
+                return;
+            }
+            
+            // Double identification - Envoyer le code de verification
+            const code = sendVerificationCode(phone);
+            const enteredCode = prompt("📱 Entrez le code de verification envoye par SMS:");
+            if (!verifyCode(enteredCode)) {
+                showToast("❌ Code incorrect - Veuillez reessayer", true);
+                return;
+            }
+            
+            // Creer le compte
+            const newUser = {
+                id: Date.now(),
+                phone: phone,
+                password: password,
+                name: name,
+                role: role,
+                cniNumber: cniNumber,
+                workshop: document.getElementById('regWorkshop')?.value || 'Mon Atelier',
+                basePrice: parseInt(document.getElementById('regPrice')?.value) || 5000,
+                neighborhood: document.getElementById('regNeighborhood')?.value || 'Dakar',
+                verified: true,
+                totalJobs: 0,
+                totalMoney: 0,
+                joinDate: new Date().toLocaleDateString()
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            showToast('✅ Inscription reussie avec verification !');
+            addNotification('Nouveau compte', name + ' a rejoint Depannage Service', 'success');
+            isLogin = true;
+            showLoginScreen();
+        }
+
+        // ============ 2FA OPTIONNELLE ============
+        function toggleTwoFactorForUser() {
+            const userId = currentUser?.id;
+            if (!userId) { showToast("Connectez-vous d'abord", true); return; }
+            if (!twoFactorAuth[userId]) { twoFactorAuth[userId] = { enabled: false, phone: '' }; }
+            const isEnabled = twoFactorAuth[userId].enabled;
+            if (!isEnabled) {
+                const phone = prompt("Entrez votre numero de telephone pour recevoir les codes:");
+                if (phone && phone.length >= 8) {
+                    twoFactorAuth[userId] = { enabled: true, phone: phone };
+                    localStorage.setItem('twoFactorAuth', JSON.stringify(twoFactorAuth));
+                    showToast('2FA activee avec succes');
+                    addNotification("Securite", "Authentification a deux facteurs activee", "success");
+                } else {
+                    showToast('Numero invalide', true);
+                    return;
+                }
+            } else {
+                twoFactorAuth[userId] = { enabled: false, phone: '' };
+                localStorage.setItem('twoFactorAuth', JSON.stringify(twoFactorAuth));
+                showToast('2FA desactivee');
+            }
+            refreshUI();
+        }
+
+        function showSecuritySettings() {
+            const app = document.getElementById('app');
+            const userId = currentUser?.id;
+            const user2FA = userId ? twoFactorAuth[userId] : null;
+            const is2FAEnabled = user2FA && user2FA.enabled;
+            
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
+                        <h1>Securite</h1>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Authentification a deux facteurs (2FA)</strong>
+                        <p>Statut: ${is2FAEnabled ? 'Activee' : 'Desactivee'}</p>
+                        ${is2FAEnabled ? '<p>Telephone: ' + user2FA.phone + '</p>' : '<p>Ajoutez une securite supplementaire a votre compte</p>'}
+                        <button onclick="toggleTwoFactorForUser()" style="width:auto; padding:8px 15px; margin-top:10px;">
+                            ${is2FAEnabled ? 'Desactiver la 2FA' : 'Activer la 2FA'}
+                        </button>
+                        ${is2FAEnabled ? '<p style="font-size:12px; color:#666; margin-top:10px;">Un code sera envoye par SMS a chaque connexion</p>' : ''}
+                    </div>
+                    <div class="log-entry">
+                        <strong>Verification d'identite</strong>
+                        <p>${currentUser?.verified ? 'Compte verifie' : 'En attente de verification'}</p>
+                        <button onclick="submitVerification()" style="width:auto; padding:8px 15px;">Soumettre une demande</button>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Contacts d'urgence</strong>
+                        <div id="emergencyContactsList">
+                            ${emergencyContacts.length === 0 ? '<p>Aucun contact d urgence</p>' : emergencyContacts.map(c => '<p>' + c.name + ' - ' + c.phone + '</p>').join('')}
+                        </div>
+                        <input type="text" id="emergencyName" placeholder="Nom du contact">
+                        <input type="tel" id="emergencyPhone" placeholder="Telephone">
+                        <button onclick="addEmergencyContact()" style="width:auto; padding:8px 15px;">Ajouter</button>
+                    </div>
+                    <button onclick="refreshUI()" style="margin-top:20px;">Retour</button>
+                </div>
+            `;
+        }
+
+        function addEmergencyContact() {
+            const name = document.getElementById('emergencyName')?.value;
+            const phone = document.getElementById('emergencyPhone')?.value;
+            if (!name || !phone) { showToast("Remplissez tous les champs", true); return; }
+            emergencyContacts.push({ name, phone });
+            localStorage.setItem('emergencyContacts', JSON.stringify(emergencyContacts));
+            showToast('Contact ajoute');
+            showSecuritySettings();
+        }
+
+        // ============ SCAN DE PLAQUE ============
+        function scanPlate() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(function(stream) {
+                        const video = document.createElement('video');
+                        video.srcObject = stream;
+                        video.autoplay = true;
+                        video.style.width = '100%';
+                        video.style.height = '300px';
+                        video.style.borderRadius = '15px';
+                        video.style.objectFit = 'cover';
+                        
+                        const container = document.createElement('div');
+                        container.style.position = 'fixed';
+                        container.style.top = '0';
+                        container.style.left = '0';
+                        container.style.right = '0';
+                        container.style.bottom = '0';
+                        container.style.background = 'rgba(0,0,0,0.9)';
+                        container.style.zIndex = '1000';
+                        container.style.display = 'flex';
+                        container.style.flexDirection = 'column';
+                        container.style.alignItems = 'center';
+                        container.style.justifyContent = 'center';
+                        container.style.padding = '20px';
+                        
+                        const videoWrapper = document.createElement('div');
+                        videoWrapper.style.width = '100%';
+                        videoWrapper.style.maxWidth = '400px';
+                        videoWrapper.style.position = 'relative';
+                        videoWrapper.appendChild(video);
+                        
+                        const frame = document.createElement('div');
+                        frame.style.position = 'absolute';
+                        frame.style.top = '50%';
+                        frame.style.left = '50%';
+                        frame.style.transform = 'translate(-50%, -50%)';
+                        frame.style.width = '250px';
+                        frame.style.height = '80px';
+                        frame.style.border = '3px solid #ff6b35';
+                        frame.style.borderRadius = '10px';
+                        frame.style.boxShadow = '0 0 30px rgba(255,107,53,0.3)';
+                        videoWrapper.appendChild(frame);
+                        
+                        const instructions = document.createElement('p');
+                        instructions.textContent = 'Placez la plaque dans le cadre';
+                        instructions.style.color = 'white';
+                        instructions.style.marginTop = '15px';
+                        instructions.style.fontSize = '16px';
+                        
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.style.display = 'flex';
+                        buttonContainer.style.gap = '15px';
+                        buttonContainer.style.marginTop = '20px';
+                        buttonContainer.style.width = '100%';
+                        buttonContainer.style.maxWidth = '400px';
+                        
+                        const captureBtn = document.createElement('button');
+                        captureBtn.textContent = 'CAPTURER';
+                        captureBtn.style.flex = '1';
+                        captureBtn.style.padding = '15px';
+                        captureBtn.style.background = '#ff6b35';
+                        captureBtn.style.color = 'white';
+                        captureBtn.style.border = 'none';
+                        captureBtn.style.borderRadius = '15px';
+                        captureBtn.style.fontWeight = 'bold';
+                        captureBtn.style.cursor = 'pointer';
+                        
+                        const cancelBtn = document.createElement('button');
+                        cancelBtn.textContent = 'ANNULER';
+                        cancelBtn.style.flex = '1';
+                        cancelBtn.style.padding = '15px';
+                        cancelBtn.style.background = '#dc2626';
+                        cancelBtn.style.color = 'white';
+                        cancelBtn.style.border = 'none';
+                        cancelBtn.style.borderRadius = '15px';
+                        cancelBtn.style.fontWeight = 'bold';
+                        cancelBtn.style.cursor = 'pointer';
+                        
+                        buttonContainer.appendChild(captureBtn);
+                        buttonContainer.appendChild(cancelBtn);
+                        
+                        container.appendChild(videoWrapper);
+                        container.appendChild(instructions);
+                        container.appendChild(buttonContainer);
+                        document.body.appendChild(container);
+                        
+                        captureBtn.onclick = function() {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            const plateNumber = prompt('Entrez le numero de la plaque detectee:');
+                            if (plateNumber) {
+                                const vehicle = prompt('Marque et modele du vehicule:');
+                                plateScans.push({
+                                    id: Date.now(),
+                                    plate: plateNumber.toUpperCase(),
+                                    vehicle: vehicle || 'Non renseigne',
+                                    date: new Date().toLocaleString(),
+                                    image: canvas.toDataURL('image/jpeg')
+                                });
+                                localStorage.setItem('plateScans', JSON.stringify(plateScans));
+                                showToast('Plaque ' + plateNumber + ' enregistree');
+                                addNotification('Scan plaque', 'Plaque ' + plateNumber + ' scannée', 'info');
+                            }
+                            stream.getTracks().forEach(track => track.stop());
+                            document.body.removeChild(container);
+                            refreshUI();
+                        };
+                        
+                        cancelBtn.onclick = function() {
+                            stream.getTracks().forEach(track => track.stop());
+                            document.body.removeChild(container);
+                            refreshUI();
+                        };
+                        
+                        document.addEventListener('keydown', function escHandler(e) {
+                            if (e.key === 'Escape') {
+                                stream.getTracks().forEach(track => track.stop());
+                                document.body.removeChild(container);
+                                document.removeEventListener('keydown', escHandler);
+                                refreshUI();
+                            }
+                        });
+                    })
+                    .catch(function(err) {
+                        showToast('Impossible d acceder a la camera', true);
+                        const plate = prompt('Entrez la plaque d immatriculation:');
+                        if (plate) {
+                            const vehicle = prompt('Marque et modele du vehicule:');
+                            plateScans.push({
+                                id: Date.now(),
+                                plate: plate.toUpperCase(),
+                                vehicle: vehicle || 'Non renseigne',
+                                date: new Date().toLocaleString()
+                            });
+                            localStorage.setItem('plateScans', JSON.stringify(plateScans));
+                            showToast('Plaque ' + plate + ' enregistree');
+                            addNotification('Scan plaque', 'Plaque ' + plate + ' enregistree', 'info');
+                            refreshUI();
+                        }
+                    });
+            } else {
+                showToast('Camera non disponible - Saisie manuelle', true);
+                const plate = prompt('Entrez la plaque d immatriculation:');
+                if (plate) {
+                    const vehicle = prompt('Marque et modele du vehicule:');
+                    plateScans.push({
+                        id: Date.now(),
+                        plate: plate.toUpperCase(),
+                        vehicle: vehicle || 'Non renseigne',
+                        date: new Date().toLocaleString()
+                    });
+                    localStorage.setItem('plateScans', JSON.stringify(plateScans));
+                    showToast('Plaque ' + plate + ' enregistree');
+                    addNotification('Scan plaque', 'Plaque ' + plate + ' enregistree', 'info');
+                    refreshUI();
+                }
+            }
+        }
+
+        function showPlateScanner() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-camera"></i></div>
+                        <h1>Scanner de plaque</h1>
+                    </div>
+                    <div class="log-entry" style="text-align:center; padding:20px;">
+                        <button onclick="scanPlate()" style="padding:20px; font-size:18px;">
+                            <i class="fas fa-camera" style="font-size:32px; display:block; margin-bottom:10px;"></i>
+                            SCANNER UNE PLAQUE
+                        </button>
+                        <p style="margin-top:10px; color:#666; font-size:12px;">
+                            Placez la plaque d'immatriculation dans le cadre
+                        </p>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Historique des scans</strong>
+                        ${plateScans.length === 0 ? '<p style="text-align:center; padding:20px; color:#666;">Aucun scan effectue</p>' : 
+                            plateScans.slice().reverse().map(s => `
+                                <div class="log-entry" style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <strong>${s.plate}</strong><br>
+                                        <small>${s.vehicle} - ${s.date}</small>
+                                    </div>
+                                    ${s.image ? '<button onclick="viewScannedPlate(' + s.id + ')" style="width:auto; padding:5px 10px;">Voir</button>' : ''}
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                    <button onclick="refreshUI()" style="margin-top:20px;">Retour</button>
+                </div>
+            `;
+        }
+
+        function viewScannedPlate(id) {
+            const scan = plateScans.find(s => s.id === id);
+            if (scan && scan.image) {
+                const win = window.open('', '_blank');
+                win.document.write('<html><head><title>Plaque scannée</title></head><body style="display:flex; justify-content:center; align-items:center; height:100vh; margin:0; background:#1a1a2e;">');
+                win.document.write('<img src="' + scan.image + '" style="max-width:100%; max-height:100%; border-radius:15px;">');
+                win.document.write('</body></html>');
+                win.document.close();
+            } else {
+                showToast('Image non disponible', true);
+            }
+        }
+
+        // ============ AUTRES FONCTIONS ============
+        function showMobileApp() {
+            showToast('Version mobile disponible en React Native');
+            addNotification('Application mobile', 'Version React Native disponible', 'info');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.download = 'DepannageService.apk';
+            link.click();
+            showToast('Telechargement de l application mobile simule');
+        }
+
+        function syncCloudDatabase() {
+            showToast('Synchronisation avec le cloud en cours...');
+            const data = {
+                users: users,
+                invoices: invoices,
+                notifications: notifications,
+                reviews: reviews,
+                fleetVehicles: fleetVehicles,
+                employeeList: employeeList,
+                timestamp: new Date().toISOString()
+            };
+            cloudBackup = { data: data, date: new Date().toLocaleString(), version: '1.0' };
+            localStorage.setItem('cloudBackup', JSON.stringify(cloudBackup));
+            setTimeout(() => {
+                showToast('Synchronisation cloud terminee');
+                addNotification('Cloud', 'Donnees synchronisees avec PostgreSQL', 'success');
+            }, 2000);
+        }
+
+        function showDatabaseStatus() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-database"></i></div>
+                        <h1>Base de donnees</h1>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Statut</strong>
+                        <p>PostgreSQL: ${cloudBackup.data ? 'Connecte' : 'Non connecte'}</p>
+                        <p>Derniere synchro: ${cloudBackup.date || 'Jamais'}</p>
+                        <p>Utilisateurs: ${users.length}</p>
+                        <p>Factures: ${invoices.length}</p>
+                    </div>
+                    <button onclick="syncCloudDatabase()">Synchroniser avec le cloud</button>
+                    <button onclick="restoreFromCloud()">Restaurer depuis le cloud</button>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function restoreFromCloud() {
+            if (cloudBackup.data) {
+                users = cloudBackup.data.users || users;
+                invoices = cloudBackup.data.invoices || invoices;
+                notifications = cloudBackup.data.notifications || notifications;
+                reviews = cloudBackup.data.reviews || reviews;
+                fleetVehicles = cloudBackup.data.fleetVehicles || fleetVehicles;
+                employeeList = cloudBackup.data.employeeList || employeeList;
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('invoices', JSON.stringify(invoices));
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+                localStorage.setItem('reviews', JSON.stringify(reviews));
+                localStorage.setItem('fleetVehicles', JSON.stringify(fleetVehicles));
+                localStorage.setItem('employeeList', JSON.stringify(employeeList));
+                showToast('Donnees restaurees depuis le cloud');
+                refreshUI();
+            } else {
+                showToast('Aucune sauvegarde cloud disponible', true);
+            }
+        }
+
+        function showPaymentAPIs() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-credit-card"></i></div>
+                        <h1>API de paiement</h1>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Orange Money API</strong>
+                        <p>Statut: ${paymentHistory.some(p => p.method === 'orange') ? 'Active' : 'Inactive'}</p>
+                        <button onclick="activatePaymentAPI('orange')">Activer Orange Money</button>
+                    </div>
+                    <div class="log-entry">
+                        <strong>MTN Mobile Money API</strong>
+                        <p>Statut: ${paymentHistory.some(p => p.method === 'mtn') ? 'Active' : 'Inactive'}</p>
+                        <button onclick="activatePaymentAPI('mtn')">Activer MTN Mobile Money</button>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Historique des paiements</strong>
+                        ${paymentHistory.length === 0 ? '<p>Aucun paiement</p>' : paymentHistory.map(p => '<p>' + p.method + ' - ' + p.amount + ' FCFA - ' + p.date + '</p>').join('')}
+                    </div>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function activatePaymentAPI(method) {
+            const amount = prompt('Entrez le montant pour tester le paiement ' + method);
+            if (amount) {
+                paymentHistory.push({
+                    id: Date.now(),
+                    method: method,
+                    amount: parseInt(amount),
+                    date: new Date().toLocaleString(),
+                    status: 'completed'
+                });
+                localStorage.setItem('paymentHistory', JSON.stringify(paymentHistory));
+                showToast('Paiement ' + method + ' de ' + amount + ' FCFA simule avec succes');
+                addNotification('Paiement API', 'Paiement ' + method + ' effectue', 'success');
+                showPaymentAPIs();
+            }
+        }
+
+        function showVideoCall() {
+            showToast('Appel video en cours de connexion...');
+            const callId = Math.random().toString(36).substring(7);
+            addNotification('Appel video', 'Appel video demarre (ID: ' + callId + ')', 'info');
+            setTimeout(() => {
+                showToast('Appel video termine');
+                addNotification('Appel video', 'Appel video termine', 'info');
+            }, 5000);
+        }
+
+        function showVoiceCall() {
+            showToast('Appel vocal en cours de connexion...');
+            const callId = Math.random().toString(36).substring(7);
+            addNotification('Appel vocal', 'Appel vocal demarre (ID: ' + callId + ')', 'info');
+            setTimeout(() => {
+                showToast('Appel vocal termine');
+                addNotification('Appel vocal', 'Appel vocal termine', 'info');
+            }, 3000);
+        }
+
+        function showInsurance() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+                        <h1>Assurance Depannage</h1>
+                    </div>
+                    <div class="enterprise-card">
+                        <h3>Votre couverture</h3>
+                        <p>Statut: ${insurancePolicies.length > 0 ? 'Actif' : 'Inactif'}</p>
+                        <p>Prestations: Depannage, Remorquage, Vehicule de remplacement</p>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Mes polices d'assurance</strong>
+                        ${insurancePolicies.length === 0 ? '<p>Aucune police d assurance</p>' : insurancePolicies.map(p => '<p><strong>' + p.name + '</strong> - ' + p.type + ' - ' + p.date + '</p>').join('')}
+                    </div>
+                    <button onclick="subscribeInsurance()">Souscrire une assurance</button>
+                    <button onclick="showInsuranceClaim()">Faire une declaration</button>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function subscribeInsurance() {
+            const name = prompt('Nom de l assurance:');
+            if (name) {
+                const type = prompt('Type (Depannage/Tous risques):');
+                insurancePolicies.push({
+                    id: Date.now(),
+                    name: name,
+                    type: type || 'Depannage',
+                    date: new Date().toLocaleString(),
+                    status: 'actif'
+                });
+                localStorage.setItem('insurancePolicies', JSON.stringify(insurancePolicies));
+                showToast('Assurance ' + name + ' souscrite avec succes');
+                addNotification('Assurance', 'Police ' + name + ' active', 'success');
+                showInsurance();
+            }
+        }
+
+        function showInsuranceClaim() {
+            const description = prompt('Description de la declaration:');
+            if (description) {
+                showToast('Declaration envoyee au service assurance');
+                addNotification('Declaration assurance', description, 'urgent');
+                showInsurance();
+            }
+        }
+
+        // ============ AUTH ============
+        function showLoginScreen() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-car-side"></i></div>
+                        <h1>Depannage Service</h1>
+                    </div>
+                    <div class="lang-selector">
+                        <button class="lang-btn ${currentLanguage === 'fr' ? 'active' : ''}" onclick="setLanguage('fr')">FR</button>
+                        <button class="lang-btn ${currentLanguage === 'en' ? 'active' : ''}" onclick="setLanguage('en')">EN</button>
+                        <button class="lang-btn" onclick="toggleDarkMode()"><i class="fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i></button>
+                    </div>
+                    <div class="role-buttons">
+                        <div class="role-btn ${selectedRole === 'driver' ? 'selected' : ''}" onclick="selectRole('driver')">Chauffeur</div>
+                        <div class="role-btn ${selectedRole === 'mechanic' ? 'selected' : ''}" onclick="selectRole('mechanic')">Mecanicien</div>
+                    </div>
+                    <input type="tel" id="loginPhone" placeholder="Telephone" value="771234567">
+                    <input type="password" id="loginPassword" placeholder="Mot de passe" value="1234">
+                    <button onclick="login()" class="btn-primary">Se connecter</button>
+                    <div class="link" onclick="showRegisterScreen()">Creer un compte</div>
+                    <div class="link" onclick="showForgotPassword()">Mot de passe oublie ?</div>
+                    <div class="link" onclick="enableGuestMode()">Mode invite</div>
+                </div>
+            `;
+        }
+
+        function showRegisterScreen() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-user-plus"></i></div>
+                        <h1>Creer un compte</h1>
+                    </div>
+                    <div class="role-buttons">
+                        <div id="regRoleDriver" class="role-btn selected">Chauffeur</div>
+                        <div id="regRoleMechanic" class="role-btn">Mecanicien</div>
+                    </div>
+                    <input type="tel" id="regPhone" placeholder="Telephone">
+                    <input type="password" id="regPassword" placeholder="Mot de passe">
+                    <input type="text" id="regName" placeholder="Nom complet">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="regCNI" placeholder="Numero CNI" style="flex:1;">
+                        <button onclick="scanCNI()" style="width:auto; padding:10px 15px; margin:0;">
+                            <i class="fas fa-camera"></i> Scanner
+                        </button>
+                    </div>
+                    <div id="regMechanicFields" class="hidden">
+                        <input type="text" id="regWorkshop" placeholder="Nom atelier">
+                        <input type="number" id="regPrice" placeholder="Prix de base" value="5000">
+                        <input type="text" id="regNeighborhood" placeholder="Quartier">
+                    </div>
+                    <button onclick="register()" class="btn-success">S'inscrire</button>
+                    <div class="link" onclick="showLoginScreen()">Deja un compte ?</div>
+                </div>
+            `;
+            
+            document.getElementById('regRoleDriver').onclick = function() {
+                document.querySelectorAll('#registerScreen .role-btn').forEach(r => r.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('regMechanicFields').classList.add('hidden');
+            };
+            document.getElementById('regRoleMechanic').onclick = function() {
+                document.querySelectorAll('#registerScreen .role-btn').forEach(r => r.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('regMechanicFields').classList.remove('hidden');
+            };
+        }
+
+        function selectRole(role) { selectedRole = role; showLoginScreen(); }
+
+        function showForgotPassword() {
+            const phone = prompt("Entrez votre numero de telephone:");
+            if (phone) {
+                const code = Math.floor(100000 + Math.random() * 900000);
+                showToast('Code de reinitialisation: ' + code);
+                const newPassword = prompt("Nouveau mot de passe:");
+                if (newPassword) {
+                    const user = users.find(u => u.phone === phone);
+                    if (user) { user.password = newPassword; localStorage.setItem('users', JSON.stringify(users)); }
+                    showToast('Mot de passe modifie');
+                }
+            }
+        }
+
+        function login() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+            const user = users.find(u => u.phone === phone && u.password === password);
+            if (!user) { showToast("Identifiants incorrects", true); return; }
+            if (bannedUsers.includes(phone)) { showToast("Ce compte est banni", true); return; }
+            
+            // Verifier la 2FA
+            const user2FA = twoFactorAuth[user.id];
+            if (user2FA && user2FA.enabled) {
+                const code = Math.floor(100000 + Math.random() * 900000);
+                const userPhone = user2FA.phone || user.phone;
+                showToast('Code envoye a ' + userPhone);
+                const userCode = prompt("Entrez le code de verification a 6 chiffres:");
+                if (userCode !== code.toString()) {
+                    showToast('Code incorrect', true);
+                    return;
+                }
+            }
+            
+            currentUser = user;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            showToast('Bonjour ' + currentUser.name);
+            refreshUI();
+        }
+
+        function refreshUI() {
+            if (!currentUser && !isGuestMode) { showLoginScreen(); return; }
+            if (currentUser?.role === 'driver') showDriverDashboard();
+            else if (currentUser?.role === 'mechanic') showMechanicDashboard();
+            else showAdminDashboard();
+            document.getElementById('widgetBtn').style.display = 'block';
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            isGuestMode = false;
+            showLoginScreen();
+            document.getElementById('widgetBtn').style.display = 'none';
+        }
+
+        function enableGuestMode() {
+            isGuestMode = true;
+            currentUser = { id: 'guest', name: 'Invite', role: 'driver', isGuest: true };
+            showToast('Mode invite active');
+            refreshUI();
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+            if (isDarkMode) document.body.classList.add('dark-mode');
+            else document.body.classList.remove('dark-mode');
+            refreshUI();
+        }
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('language', lang);
+            refreshUI();
+        }
+
+        // ============ PAIEMENTS ============
+        function showPaymentModal(amount, mechanicName) {
+            const methods = { orange_money: 'Orange Money', mtn_money: 'MTN Mobile Money', card: 'Carte Bancaire', qr: 'QR Code', cash: 'Especes' };
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-money-bill"></i></div>
+                        <h1>Paiement</h1>
+                    </div>
+                    <p style="text-align:center">Mecanicien: ${mechanicName}</p>
+                    <p style="text-align:center; font-size:24px; font-weight:bold; color:#ff6b35;">${amount.toLocaleString()} FCFA</p>
+                    <div class="payment-methods">
+                        ${Object.entries(methods).map(([key, name]) => `<div class="payment-method ${selectedPayment === key ? 'selected' : ''}" onclick="selectPaymentMethod('${key}')">${name}</div>`).join('')}
+                    </div>
+                    <div id="paymentFields"></div>
+                    <button onclick="processPayment(${amount}, '${mechanicName}')" class="btn-success">CONFIRMER</button>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+            updatePaymentFields();
+        }
+
+        function selectPaymentMethod(method) { selectedPayment = method; updatePaymentFields(); }
+
+        function updatePaymentFields() {
+            const container = document.getElementById('paymentFields');
+            if (!container) return;
+            if (selectedPayment === 'card') {
+                container.innerHTML = `<input type="text" id="cardNumber" placeholder="Numero de carte"><input type="text" id="cardExpiry" placeholder="MM/AA"><input type="password" id="cardCvv" placeholder="CVV">`;
+            } else if (selectedPayment === 'qr') {
+                container.innerHTML = `<div class="qr-code"><div style="text-align:center">QR Code<br>Scannez pour payer<br>${document.getElementById('paymentAmount')?.value || 5000} FCFA</div></div>`;
+            } else {
+                container.innerHTML = `<input type="tel" id="paymentPhone" placeholder="Numero ${selectedPayment === 'orange_money' ? 'Orange Money' : 'MTN Mobile Money'}">`;
+            }
+        }
+
+        function processPayment(amount, mechanicName) {
+            if (selectedPayment === 'card') {
+                const cardNum = document.getElementById('cardNumber')?.value;
+                if (!cardNum) { showToast("Entrez les infos carte", true); return; }
+            } else if (selectedPayment !== 'qr' && selectedPayment !== 'cash') {
+                const phone = document.getElementById('paymentPhone')?.value;
+                if (!phone) { showToast("Entrez le numero", true); return; }
+            }
+            showToast('Paiement de ' + amount.toLocaleString() + ' FCFA effectue !');
+            addNotification("Paiement", amount.toLocaleString() + ' FCFA a ' + mechanicName);
+            const invoice = { id: Date.now(), number: 'FACT-' + Date.now(), amount, mechanic: mechanicName, customer: currentUser.name, service: selectedService, date: new Date().toLocaleString() };
+            invoices.push(invoice);
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+            setTimeout(() => refreshUI(), 2000);
+        }
+
+        // ============ APPEL URGENCE ============
+        function callUrgent() {
+            showToast('Recherche du meilleur mecanicien...');
+            setTimeout(() => {
+                const mechanics = users.filter(u => u.role === 'mechanic');
+                if (mechanics.length > 0) {
+                    const random = mechanics[Math.floor(Math.random() * mechanics.length)];
+                    showPaymentModal(selectedPrice, random.name);
+                } else {
+                    showToast('Aucun mecanicien disponible', true);
+                }
+            }, 1500);
+        }
+
+        function callMechanic(name, price) {
+            showToast('Appel de ' + name + '...');
+            setTimeout(() => showPaymentModal(price, name), 1000);
+        }
+
+        // ============ SUIVI GPS ============
+        function showTrackingMap() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <h2>Suivi GPS</h2>
+                    </div>
+                    <div id="trackingMap" class="tracking-map"></div>
+                    <div style="margin:15px 0">
+                        <p>Distance: <span id="distance">2.3 km</span></p>
+                        <p>Arrivee: <span id="eta">10 min</span></p>
+                    </div>
+                    <button onclick="shareLocation()" class="share-btn"><i class="fab fa-whatsapp"></i> Partager ma position</button>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+            
+            const map = L.map('trackingMap').setView([14.7167, -17.4677], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const driverLat = pos.coords.latitude;
+                    const driverLng = pos.coords.longitude;
+                    L.marker([driverLat, driverLng], { icon: L.divIcon({ html: '<div style="background:#ff6b35; width:20px; height:20px; border-radius:50%;"></div>', iconSize: [20,20] }) }).addTo(map);
+                    map.setView([driverLat, driverLng], 14);
+                    
+                    let mechanicLat = driverLat + 0.02;
+                    let mechanicLng = driverLng + 0.02;
+                    let mechanicMarker = L.marker([mechanicLat, mechanicLng], { icon: L.divIcon({ html: '<div style="background:#22c55e; width:25px; height:25px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px;">M</div>', iconSize: [25,25] }) }).addTo(map);
+                    
+                    let distance = 2.3, eta = 10;
+                    if (trackingInterval) clearInterval(trackingInterval);
+                    trackingInterval = setInterval(() => {
+                        distance = Math.max(0, distance - 0.15);
+                        eta = Math.max(0, eta - 1);
+                        mechanicLat -= 0.003;
+                        mechanicLng -= 0.003;
+                        mechanicMarker.setLatLng([mechanicLat, mechanicLng]);
+                        document.getElementById('distance').innerText = distance > 0 ? distance.toFixed(1) + ' km' : 'Arrive !';
+                        document.getElementById('eta').innerText = eta > 0 ? eta + ' min' : 'Arrive !';
+                        if (distance <= 0) clearInterval(trackingInterval);
+                    }, 2000);
+                });
+            }
+        }
+
+        // ============ CHAT ============
+        function showChat() {
+            const messages = activeChat === 'driver' ? driverMessages : mechanicMessages;
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-comments"></i></div>
+                        <h2>Discussions</h2>
+                    </div>
+                    <div class="role-buttons">
+                        <div class="role-btn ${activeChat === 'driver' ? 'selected' : ''}" onclick="setActiveChat('driver')">Chauffeurs</div>
+                        <div class="role-btn ${activeChat === 'mechanic' ? 'selected' : ''}" onclick="setActiveChat('mechanic')">Mecaniciens</div>
+                    </div>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="Votre message...">
+                            <button onclick="sendMessage()">Envoyer</button>
+                        </div>
+                    </div>
+                    <div class="role-buttons">
+                        <button onclick="showVoiceCall()" class="btn-primary"><i class="fas fa-phone"></i> Appel vocal</button>
+                        <button onclick="showVideoCall()" class="btn-primary"><i class="fas fa-video"></i> Appel video</button>
+                    </div>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+            displayMessages();
+        }
+
+        function setActiveChat(chat) { activeChat = chat; showChat(); }
+
+        function displayMessages() {
+            const container = document.getElementById('chatMessages');
+            if (!container) return;
+            const messages = activeChat === 'driver' ? driverMessages : mechanicMessages;
+            container.innerHTML = messages.map(msg => `
+                <div class="chat-message ${msg.sender === currentUser?.name ? 'sent' : ''}">
+                    <div class="message-bubble ${msg.sender === currentUser?.name ? 'sent' : 'received'}">
+                        <strong>${msg.sender}</strong><br>${msg.message}<br><small>${msg.time}</small>
+                    </div>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            if (!input.value.trim()) return;
+            const msg = { sender: currentUser?.name || 'Invite', message: input.value, time: new Date().toLocaleTimeString() };
+            if (activeChat === 'driver') driverMessages.push(msg);
+            else mechanicMessages.push(msg);
+            localStorage.setItem(activeChat === 'driver' ? 'driver_messages' : 'mechanic_messages', JSON.stringify(activeChat === 'driver' ? driverMessages : mechanicMessages));
+            input.value = '';
+            displayMessages();
+        }
+
+        // ============ SUPPORT ============
+        function showSupport() {
+            const app = document.getElementById('app');
+            const userTickets = supportTickets.filter(t => t.userId === currentUser?.id);
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-headset"></i></div>
+                        <h2>Support client</h2>
+                    </div>
+                    <input type="text" id="ticketTitle" placeholder="Sujet">
+                    <textarea id="ticketMessage" rows="3" placeholder="Decrivez votre probleme..."></textarea>
+                    <button onclick="sendTicket()">Envoyer</button>
+                    <h3>Mes demandes</h3>
+                    <div id="ticketsList">${userTickets.length === 0 ? '<p>Aucune demande</p>' : userTickets.map(t => `<div class="log-entry"><strong>${t.title}</strong><br>${t.message}<br><small>${t.date} - ${t.status}</small></div>`).join('')}</div>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function sendTicket() {
+            const title = document.getElementById('ticketTitle').value;
+            const message = document.getElementById('ticketMessage').value;
+            if (!title || !message) { showToast("Remplissez tous les champs", true); return; }
+            supportTickets.push({ id: Date.now(), userId: currentUser?.id, title, message, status: 'En cours', date: new Date().toLocaleString() });
+            localStorage.setItem('supportTickets', JSON.stringify(supportTickets));
+            showToast('Demande envoyee');
+            showSupport();
+        }
+
+        // ============ CATALOGUE PIECES ============
+        function showPartsCatalog() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-boxes"></i></div>
+                        <h2>Catalogue pieces</h2>
+                    </div>
+                    <div class="parts-grid" id="partsGrid"></div>
+                    <div id="cartSummary"></div>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+            let cart = [];
+            const grid = document.getElementById('partsGrid');
+            grid.innerHTML = partsCatalog.map(p => `
+                <div class="part-card" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">
+                    <div style="font-size:32px;"><i class="${p.icon}"></i></div>
+                    <strong>${p.name}</strong><br>${p.price.toLocaleString()} FCFA<br><small>${p.brand}</small>
+                </div>
+            `).join('');
+            window.addToCart = (id, name, price) => {
+                cart.push({ id, name, price });
+                const total = cart.reduce((s, i) => s + i.price, 0);
+                document.getElementById('cartSummary').innerHTML = `<div style="margin-top:15px; padding:15px; background:#f0f0f0; border-radius:15px;">Total: ${total.toLocaleString()} FCFA<br><button onclick="checkoutCart(${total})">Commander</button></div>`;
+            };
+            window.checkoutCart = (total) => showPaymentModal(total, "Fournisseur");
+        }
+
+        // ============ VERIFICATION MECANICIEN ============
+        function showVerification() {
+            const existing = pendingVerifications.find(v => v.userId === currentUser?.id);
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-id-card"></i></div>
+                        <h2>Verification</h2>
+                    </div>
+                    ${existing ? `<div class="log-entry">Statut: ${existing.status === 'approved' ? 'Verifie' : 'En attente'}</div>` : `
+                        <input type="text" id="license" placeholder="Numero d'agrement">
+                        <button onclick="submitVerification()">Soumettre</button>
+                    `}
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function submitVerification() {
+            const license = document.getElementById('license').value;
+            if (!license) { showToast("Entrez votre numero", true); return; }
+            pendingVerifications.push({ userId: currentUser.id, name: currentUser.name, license, status: 'pending', date: new Date().toLocaleString() });
+            localStorage.setItem('pendingVerifications', JSON.stringify(pendingVerifications));
+            showToast('Demande envoyee');
+            refreshUI();
+        }
+
+        // ============ PROMOTIONS ============
+        function showPromotions() {
+            const userPoints = loyaltyPoints[currentUser?.id] || 0;
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-gift"></i></div>
+                        <h2>Promotions</h2>
+                    </div>
+                    <div class="loyalty-points" style="text-align:center; margin-bottom:15px;">Points fidelite: ${userPoints} points</div>
+                    ${promotions.map(p => `<div class="log-entry"><strong>${p.code}</strong><br>${p.description}<br><button onclick="applyPromo('${p.code}')" style="width:auto; padding:5px 15px; margin:5px 0;">Utiliser</button></div>`).join('')}
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function applyPromo(code) { showToast('Code ' + code + ' applique !'); }
+
+        // ============ FACTURES ============
+        function showInvoices() {
+            const userInvoices = invoices.filter(i => i.customer === currentUser?.name);
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-file-invoice"></i></div>
+                        <h2>Mes factures</h2>
+                    </div>
+                    ${userInvoices.length === 0 ? '<p>Aucune facture</p>' : userInvoices.map(i => `
+                        <div class="log-entry">
+                            <strong>${i.number}</strong><br>
+                            ${i.amount.toLocaleString()} FCFA<br>
+                            ${i.date}<br>
+                            <button onclick='downloadPDF(${JSON.stringify(i).replace(/'/g, "\\'")})' style="width:auto; padding:5px 10px; margin-top:5px;">Telecharger PDF</button>
+                        </div>
+                    `).join('')}
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        function downloadPDF(invoice) {
+            const element = document.createElement('div');
+            element.innerHTML = `
+                <div style="padding:20px; font-family:Arial;">
+                    <h1 style="text-align:center;">FACTURE</h1>
+                    <p><strong>N:</strong> ${invoice.number}</p>
+                    <p><strong>Date:</strong> ${invoice.date}</p>
+                    <p><strong>Client:</strong> ${invoice.customer}</p>
+                    <p><strong>Service:</strong> ${invoice.service || 'Depannage'}</p>
+                    <p><strong>Montant:</strong> ${invoice.amount.toLocaleString()} FCFA</p>
+                    <p><strong>Statut:</strong> Paye</p>
+                    <hr>
+                    <p style="text-align:center;">Merci pour votre confiance !</p>
+                </div>
+            `;
+            html2pdf().from(element).save('facture_' + invoice.number + '.pdf');
+            showToast('Facture telechargee en PDF');
+        }
+
+        // ============ NOTIFICATIONS ============
+        function showNotifications() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-bell"></i></div>
+                        <h2>Notifications</h2>
+                    </div>
+                    ${notifications.length === 0 ? '<p>Aucune notification</p>' : notifications.map(n => `<div class="log-entry notification-item ${n.type === 'urgent' ? 'notification-urgent' : ''}"><strong>${n.title}</strong><br>${n.message}<br><small>${n.date}</small></div>`).join('')}
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        // ============ NOTIFICATION CHAT ============
+        function sendChatNotification(toUserId, title, message, type = 'info') {
+            const notification = {
+                id: Date.now(),
+                fromUserId: currentUser?.id,
+                fromUserName: currentUser?.name || 'Admin',
+                toUserId: toUserId,
+                title: title,
+                message: message,
+                type: type,
+                read: false,
+                timestamp: new Date().toLocaleString()
+            };
+            chatNotifications.push(notification);
+            localStorage.setItem('chatNotifications', JSON.stringify(chatNotifications));
+            showToast(title + ': ' + message);
+            addNotification(title, message, type);
+            playNotificationSound();
+            return notification;
+        }
+
+        function notifyAllDrivers(title, message) {
+            const drivers = users.filter(u => u.role === 'driver');
+            drivers.forEach(driver => sendChatNotification(driver.id, title, message, 'broadcast'));
+            showToast('Notification envoyee a ' + drivers.length + ' chauffeurs');
+        }
+
+        function notifyAllMechanics(title, message) {
+            const mechanics = users.filter(u => u.role === 'mechanic');
+            mechanics.forEach(mechanic => sendChatNotification(mechanic.id, title, message, 'broadcast'));
+            showToast('Notification envoyee a ' + mechanics.length + ' mecaniciens');
+        }
+
+        function showNotificationChat() {
+            const app = document.getElementById('app');
+            const userNotifications = chatNotifications.filter(n => n.toUserId === currentUser?.id || n.fromUserId === currentUser?.id);
+            const unreadCount = chatNotifications.filter(n => n.toUserId === currentUser?.id && !n.read).length;
+            
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-bell"></i></div>
+                        <h1>Centre de notifications</h1>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-card" style="background:#3b82f6;"><div style="font-size:28px;">${unreadCount}</div><div>Non lues</div></div>
+                        <div class="stat-card" style="background:#22c55e;"><div style="font-size:28px;">${userNotifications.length}</div><div>Total</div></div>
+                    </div>
+                    <div id="notificationMessages" style="max-height:400px; overflow-y:auto;">
+                        ${userNotifications.length === 0 ? '<p style="text-align:center; padding:40px;">Aucune notification</p>' : 
+                            userNotifications.sort((a,b) => b.id - a.id).map(n => `
+                                <div class="log-entry notification-item ${n.type === 'urgent' ? 'notification-urgent' : n.type === 'broadcast' ? 'notification-broadcast' : ''}" style="border-left: 4px solid ${n.type === 'urgent' ? '#ef4444' : n.type === 'broadcast' ? '#f59e0b' : '#22c55e'};">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <strong><i class="fas ${n.type === 'urgent' ? 'fa-exclamation-triangle' : n.type === 'broadcast' ? 'fa-bullhorn' : 'fa-bell'}"></i> ${n.title}</strong>
+                                        <small>${n.timestamp}</small>
+                                    </div>
+                                    <p>${n.message}</p>
+                                    <small>De: ${n.fromUserName}</small>
+                                    ${!n.read && n.toUserId === currentUser?.id ? '<button onclick="markNotificationRead(' + n.id + ')" style="width:auto; padding:5px 10px; margin-top:5px;">Marquer comme lue</button>' : ''}
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                    ${currentUser?.role === 'admin' ? `
+                        <div style="margin-top:20px;">
+                            <h3>Envoyer une notification</h3>
+                            <input type="text" id="notifTitle" placeholder="Titre">
+                            <textarea id="notifMessage" rows="2" placeholder="Message"></textarea>
+                            <div class="role-buttons">
+                                <button onclick="sendToAllDrivers()" style="background:#3b82f6;">Aux chauffeurs</button>
+                                <button onclick="sendToAllMechanics()" style="background:#22c55e;">Aux mecaniciens</button>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+            
+            chatNotifications.forEach(n => {
+                if (n.toUserId === currentUser?.id && !n.read) n.read = true;
+            });
+            localStorage.setItem('chatNotifications', JSON.stringify(chatNotifications));
+        }
+
+        function markNotificationRead(id) {
+            const notif = chatNotifications.find(n => n.id === id);
+            if (notif) notif.read = true;
+            localStorage.setItem('chatNotifications', JSON.stringify(chatNotifications));
+            showNotificationChat();
+        }
+
+        function sendToAllDrivers() {
+            const title = document.getElementById('notifTitle')?.value;
+            const message = document.getElementById('notifMessage')?.value;
+            if (!title || !message) { showToast("Remplissez tous les champs", true); return; }
+            notifyAllDrivers(title, message);
+            document.getElementById('notifTitle').value = '';
+            document.getElementById('notifMessage').value = '';
+            showToast('Notification envoyee a tous les chauffeurs');
+        }
+
+        function sendToAllMechanics() {
+            const title = document.getElementById('notifTitle')?.value;
+            const message = document.getElementById('notifMessage')?.value;
+            if (!title || !message) { showToast("Remplissez tous les champs", true); return; }
+            notifyAllMechanics(title, message);
+            document.getElementById('notifTitle').value = '';
+            document.getElementById('notifMessage').value = '';
+            showToast('Notification envoyee a tous les mecaniciens');
+        }
+
+        // ============ REVIEWS ============
+        function showReviews() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-star"></i></div>
+                        <h1>Avis des utilisateurs</h1>
+                    </div>
+                    <div id="reviewsList">
+                        ${reviews.length === 0 ? '<p>Aucun avis pour le moment</p>' : reviews.map(r => `
+                            <div class="log-entry">
+                                <strong>${r.userName}</strong> ${r.rating}/5<br>
+                                "${r.comment}"<br>
+                                <small>${r.date}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <textarea id="reviewComment" rows="2" placeholder="Partagez votre experience..."></textarea>
+                    <div class="rating-stars">
+                        ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating(${i})">★</span>`).join('')}
+                    </div>
+                    <button onclick="submitReview()">Publier un avis</button>
+                    <button onclick="refreshUI()">Retour</button>
+                </div>
+            `;
+        }
+
+        let selectedRating = 5;
+        function setRating(rating) { 
+            selectedRating = rating;
+            document.querySelectorAll('.star').forEach((s, i) => {
+                if (i < rating) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+        }
+
+        function submitReview() {
+            const comment = document.getElementById('reviewComment').value;
+            if (!comment) { showToast("Ecrivez votre avis", true); return; }
+            reviews.push({ id: Date.now(), userName: currentUser.name, rating: selectedRating, comment, date: new Date().toLocaleString() });
+            localStorage.setItem('reviews', JSON.stringify(reviews));
+            showToast('Merci pour votre avis !');
+            showReviews();
+        }
+
+        // ============ SHARE LOCATION ============
+        function shareLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const location = 'https://maps.google.com/?q=' + pos.coords.latitude + ',' + pos.coords.longitude;
+                    if (navigator.share) {
+                        navigator.share({ title: 'Ma position', text: 'Je suis ici', url: location });
+                    } else {
+                        navigator.clipboard.writeText(location);
+                        showToast('Position copiee');
+                    }
+                }, () => showToast("Impossible d'obtenir la position", true));
+            }
+        }
+
+        // ============ QUICK ACCESS ============
+        function quickAccess() { callUrgent(); }
+
+        // ============ DASHBOARD CHAUFFEUR ============
+        function showDriverDashboard() {
+            const mechanics = users.filter(u => u.role === 'mechanic');
+            const unreadCount = notifications.filter(n => !n.read).length;
+            const chatUnreadCount = chatNotifications.filter(n => n.toUserId === currentUser?.id && !n.read).length;
+            const userPoints = loyaltyPoints[currentUser?.id] || 0;
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="header">
+                    <div><strong>Bonjour ${currentUser?.name || 'Invite'}</strong><br><small>Chauffeur ${currentUser?.isGuest ? '<span class="guest-badge">Mode invite</span>' : ''}</small></div>
+                    <div>
+                        <span class="loyalty-points">${userPoints} pts</span>
+                        <button onclick="showNotificationChat()" style="width:auto; padding:8px 12px;"><i class="fas fa-bell"></i> ${chatUnreadCount > 0 ? '(' + chatUnreadCount + ')' : ''}</button>
+                        <button onclick="showNotifications()" style="width:auto; padding:8px 12px;"><i class="fas fa-envelope"></i> ${unreadCount > 0 ? '(' + unreadCount + ')' : ''}</button>
+                        <button onclick="toggleDarkMode()" style="width:auto; padding:8px 12px;"><i class="fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i></button>
+                        <button onclick="logout()" style="width:auto; padding:8px 15px;">Deconnexion</button>
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card"><div style="font-size:28px;">${users.filter(u => u.role === 'driver').length}</div><div>Chauffeurs</div></div>
+                    <div class="stat-card"><div style="font-size:28px;">${mechanics.length}</div><div>Mecaniciens</div></div>
+                    <div class="stat-card"><div style="font-size:28px;">${users.length}</div><div>Inscrits</div></div>
+                </div>
+                
+                <div class="role-buttons">
+                    <button onclick="showTrackingMap()"><i class="fas fa-map-marker-alt"></i> Suivi GPS</button>
+                    <button onclick="showChat()"><i class="fas fa-comments"></i> Discussion</button>
+                    <button onclick="showSupport()"><i class="fas fa-headset"></i> Support</button>
+                    <button onclick="showReviews()"><i class="fas fa-star"></i> Avis</button>
+                    <button onclick="showSecuritySettings()"><i class="fas fa-shield-alt"></i> Securite</button>
+                    <button onclick="showPlateScanner()"><i class="fas fa-camera"></i> Scanner plaque</button>
+                    <button onclick="showCNIHistory()"><i class="fas fa-id-card"></i> CNI scannees</button>
+                    <button onclick="showMobileApp()"><i class="fas fa-mobile-screen"></i> App mobile</button>
+                    <button onclick="showDatabaseStatus()"><i class="fas fa-database"></i> Base de donnees</button>
+                    <button onclick="showPaymentAPIs()"><i class="fas fa-credit-card"></i> Paiements API</button>
+                    <button onclick="showInsurance()"><i class="fas fa-shield-halved"></i> Assurance</button>
+                </div>
+                
+                <button class="emergency-btn" onclick="callUrgent()">APPEL D'URGENCE</button>
+                
+                <div class="card">
+                    <h3>Type de panne</h3>
+                    <div class="service-grid">
+                        <div class="service-card ${selectedService === 'batterie' ? 'selected' : ''}" onclick="selectPanne('batterie', 5000)">Batterie<br>5.000 FCFA</div>
+                        <div class="service-card ${selectedService === 'crevaison' ? 'selected' : ''}" onclick="selectPanne('crevaison', 7000)">Crevaison<br>7.000 FCFA</div>
+                        <div class="service-card ${selectedService === 'moteur' ? 'selected' : ''}" onclick="selectPanne('moteur', 15000)">Moteur<br>15.000 FCFA</div>
+                        <div class="service-card ${selectedService === 'carburant' ? 'selected' : ''}" onclick="selectPanne('carburant', 8000)">Carburant<br>8.000 FCFA</div>
+                    </div>
+                    <div class="stats"><div>Prix estime</div><div class="price">${selectedPrice.toLocaleString()} FCFA</div></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Mecaniciens disponibles</h3>
+                    ${mechanics.length === 0 ? '<p style="text-align:center">Aucun mecanicien</p>' : mechanics.map(m => `
+                        <div class="mechanic-item" onclick="callMechanic('${m.name}', ${m.basePrice})">
+                            <div>
+                                <strong>${m.name}</strong><br>
+                                <small>${m.workshop} | ${m.neighborhood}</small>
+                                <br><small>${(reviews.filter(r => r.userName === m.name).reduce((a,b)=>a+b.rating,0)/Math.max(1,reviews.filter(r=>r.userName===m.name).length)).toFixed(1) || 'Nouveau'}/5</small>
+                            </div>
+                            <div style="color:#ff6b35;">${m.basePrice.toLocaleString()} FCFA</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="role-buttons">
+                    <button onclick="showPromotions()"><i class="fas fa-gift"></i> Promotions</button>
+                    <button onclick="showInvoices()"><i class="fas fa-file-invoice"></i> Factures</button>
+                    <button onclick="sendSOS()" class="btn-danger"><i class="fas fa-exclamation-triangle"></i> SOS</button>
+                    <button onclick="shareLocation()" class="share-btn"><i class="fab fa-whatsapp"></i> Partager</button>
+                </div>
+            `;
+        }
+
+        // ============ DASHBOARD MECANICIEN ============
+        function showMechanicDashboard() {
+            const drivers = users.filter(u => u.role === 'driver');
+            const isVerified = pendingVerifications.some(v => v.userId === currentUser?.id && v.status === 'approved');
+            const userPoints = loyaltyPoints[currentUser?.id] || 0;
+            const chatUnreadCount = chatNotifications.filter(n => n.toUserId === currentUser?.id && !n.read).length;
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="header">
+                    <div><strong>Bonjour ${currentUser?.name}</strong><br><small>Mecanicien</small></div>
+                    <div>
+                        <span class="loyalty-points">${userPoints} pts</span>
+                        <button onclick="showNotificationChat()" style="width:auto; padding:8px 12px;"><i class="fas fa-bell"></i> ${chatUnreadCount > 0 ? '(' + chatUnreadCount + ')' : ''}</button>
+                        <button onclick="toggleDarkMode()" style="width:auto; padding:8px 12px;"><i class="fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i></button>
+                        <button onclick="logout()" style="width:auto; padding:8px 15px;">Deconnexion</button>
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card"><div style="font-size:28px;">${drivers.length}</div><div>Chauffeurs</div></div>
+                    <div class="stat-card"><div style="font-size:28px;">${users.filter(u => u.role === 'mechanic').length}</div><div>Mecaniciens</div></div>
+                    <div class="stat-card"><div style="font-size:28px;">${users.length}</div><div>Inscrits</div></div>
+                </div>
+                
+                <div class="role-buttons">
+                    <button onclick="showChat()"><i class="fas fa-comments"></i> Discussion</button>
+                    <button onclick="showPartsCatalog()"><i class="fas fa-boxes"></i> Pieces</button>
+                    <button onclick="showVerification()"><i class="fas fa-id-card"></i> Verification</button>
+                    <button onclick="showReviews()"><i class="fas fa-star"></i> Avis</button>
+                    <button onclick="showSecuritySettings()"><i class="fas fa-shield-alt"></i> Securite</button>
+                    <button onclick="showPlateScanner()"><i class="fas fa-camera"></i> Scanner plaque</button>
+                    <button onclick="showCNIHistory()"><i class="fas fa-id-card"></i> CNI scannees</button>
+                    <button onclick="showPaymentAPIs()"><i class="fas fa-credit-card"></i> Paiements API</button>
+                    <button onclick="showInsurance()"><i class="fas fa-shield-halved"></i> Assurance</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Mon activite</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <span>Statut: <span id="statusText" style="color:#22c55e;">En ligne</span></span>
+                        <button id="toggleStatus" style="width:auto; padding:8px 20px;">Changer</button>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <p>${currentUser?.workshop}</p>
+                        <p>${currentUser?.neighborhood}</p>
+                        <p>${currentUser?.basePrice.toLocaleString()} FCFA</p>
+                        ${isVerified ? '<p><span class="verification-badge verified">Compte verifie</span></p>' : '<p><span class="verification-badge pending">Non verifie</span></p>'}
+                        <p>Note: ${(reviews.filter(r => r.userName === currentUser?.name).reduce((a,b)=>a+b.rating,0)/Math.max(1,reviews.filter(r=>r.userName===currentUser?.name).length)).toFixed(1) || 'Nouveau'}/5</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Demandes recues</h3>
+                    <div id="requestsList" style="text-align:center; padding:20px;">Aucune demande</div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card" style="background:#1a1a3e;"><div style="font-size:28px;" id="totalJobs">${currentUser?.totalJobs || 0}</div><div>Interventions</div></div>
+                    <div class="stat-card" style="background:#1a1a3e;"><div style="font-size:28px;" id="totalMoney">${currentUser?.totalMoney || 0}</div><div>Gains (FCFA)</div></div>
+                </div>
+                
+                <div class="role-buttons">
+                    <button onclick="showPromotions()"><i class="fas fa-gift"></i> Promotions</button>
+                    <button onclick="showInvoices()"><i class="fas fa-file-invoice"></i> Factures</button>
+                    <button onclick="shareLocation()" class="share-btn"><i class="fab fa-whatsapp"></i> Partager</button>
+                </div>
+            `;
+            
+            document.getElementById('toggleStatus').onclick = () => {
+                const statusText = document.getElementById('statusText');
+                const isOnline = statusText.innerText.includes('En ligne');
+                statusText.innerHTML = isOnline ? 'Hors ligne' : 'En ligne';
+                statusText.style.color = isOnline ? '#ef4444' : '#22c55e';
+                showToast('Statut: ' + statusText.innerText);
+            };
+            
+            setTimeout(() => {
+                const requestsDiv = document.getElementById('requestsList');
+                if (requestsDiv && Math.random() < 0.5) {
+                    requestsDiv.innerHTML = `<div class="mechanic-item" onclick="acceptRequest()"><div><strong>Client a 2.5 km</strong><br><small>Panne batterie - Urgent</small></div><div style="color:#22c55e;">5.000 FCFA</div></div>`;
+                }
+            }, 5000);
+        }
+
+        function acceptRequest() {
+            showToast('Intervention acceptee ! Guidage...');
+            setTimeout(() => {
+                showToast('Vous etes arrive !');
+                if (currentUser) {
+                    currentUser.totalJobs = (currentUser.totalJobs || 0) + 1;
+                    currentUser.totalMoney = (currentUser.totalMoney || 0) + 5000;
+                    const index = users.findIndex(u => u.id === currentUser.id);
+                    if (index !== -1) users[index] = currentUser;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+                refreshUI();
+            }, 3000);
+        }
+
+        // ============ ADMIN ============
+        function showAdminDashboard() {
+            const drivers = users.filter(u => u.role === 'driver');
+            const mechanics = users.filter(u => u.role === 'mechanic');
+            const pending = pendingVerifications.filter(v => v.status === 'pending');
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div class="logo">
+                        <div class="logo-icon"><i class="fas fa-crown"></i></div>
+                        <h1>Administration</h1>
+                    </div>
+                    <div class="header" style="margin:-25px -25px 20px -25px; border-radius:30px 30px 0 0;">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button onclick="showNotificationChat()" style="width:auto; padding:8px 12px;"><i class="fas fa-bell"></i></button>
+                            <button onclick="showDatabaseStatus()" style="width:auto; padding:8px 12px;"><i class="fas fa-database"></i></button>
+                            <button onclick="showPaymentAPIs()" style="width:auto; padding:8px 12px;"><i class="fas fa-credit-card"></i></button>
+                            <button onclick="showInsurance()" style="width:auto; padding:8px 12px;"><i class="fas fa-shield-halved"></i></button>
+                            <button onclick="showPlateScanner()" style="width:auto; padding:8px 12px;"><i class="fas fa-camera"></i></button>
+                            <button onclick="showCNIHistory()" style="width:auto; padding:8px 12px;"><i class="fas fa-id-card"></i></button>
+                            <button onclick="logout()" style="width:auto; padding:8px 15px;">Deconnexion</button>
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-card"><div style="font-size:28px;">${drivers.length}</div><div>Chauffeurs</div></div>
+                        <div class="stat-card"><div style="font-size:28px;">${mechanics.length}</div><div>Mecaniciens</div></div>
+                        <div class="stat-card"><div style="font-size:28px;">${users.length}</div><div>Total</div></div>
+                    </div>
+                    <div class="admin-tabs">
+                        <div class="admin-tab active" onclick="showAdminSection('users')">Utilisateurs</div>
+                        <div class="admin-tab" onclick="showAdminSection('verif')">Verifications (${pending.length})</div>
+                        <div class="admin-tab" onclick="showAdminSection('support')">Support (${supportTickets.length})</div>
+                        <div class="admin-tab" onclick="showAdminSection('reviews')">Avis (${reviews.length})</div>
+                    </div>
+                    <div id="adminContent">
+                        ${users.map(u => `<div class="log-entry"><strong>${u.name}</strong> - ${u.phone} - ${u.role === 'driver' ? 'Chauffeur' : 'Mecanicien'} - ${u.totalJobs || 0} interventions <button onclick="banUser('${u.phone}')" style="width:auto; padding:5px 10px; background:#dc2626;">Bannir</button></div>`).join('')}
+                    </div>
+                    <button onclick="exportData()">Exporter Excel</button>
+                    <button onclick="showStats()">Statistiques globales</button>
+                </div>
+            `;
+        }
+
+        function showAdminSection(section) {
+            const content = document.getElementById('adminContent');
+            if (section === 'verif') {
+                const pending = pendingVerifications.filter(v => v.status === 'pending');
+                content.innerHTML = pending.map(v => `<div class="log-entry"><strong>${v.name}</strong> - ${v.license}<br><button onclick="approveUser(${v.userId})" style="background:#22c55e;">Approuver</button> <button onclick="rejectUser(${v.userId})" style="background:#dc2626;">Rejeter</button></div>`).join('') || '<p>Aucune demande</p>';
+            } else if (section === 'support') {
+                content.innerHTML = supportTickets.map(t => `<div class="log-entry"><strong>${t.title}</strong><br>${t.message}<br><small>${t.date}</small></div>`).join('') || '<p>Aucun ticket</p>';
+            } else if (section === 'reviews') {
+                content.innerHTML = reviews.map(r => `<div class="log-entry"><strong>${r.userName}</strong> ${r.rating}/5<br>"${r.comment}"<br><small>${r.date}</small></div>`).join('') || '<p>Aucun avis</p>';
+            } else {
+                content.innerHTML = users.map(u => `<div class="log-entry"><strong>${u.name}</strong> - ${u.phone} - ${u.role} <button onclick="banUser('${u.phone}')" style="background:#dc2626;">Bannir</button></div>`).join('');
+            }
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function banUser(phone) { bannedUsers.push(phone); localStorage.setItem('bannedUsers', JSON.stringify(bannedUsers)); showToast('Utilisateur banni'); refreshUI(); }
+        function approveUser(userId) { const v = pendingVerifications.find(v => v.userId === userId); if(v) v.status = 'approved'; localStorage.setItem('pendingVerifications', JSON.stringify(pendingVerifications)); showToast('Approuve'); refreshUI(); }
+        function rejectUser(userId) { pendingVerifications = pendingVerifications.filter(v => v.userId !== userId); localStorage.setItem('pendingVerifications', JSON.stringify(pendingVerifications)); showToast('Rejete'); refreshUI(); }
+        function exportData() { showToast('Export Excel simule'); }
+        function showStats() { showToast(users.length + ' utilisateurs, ' + reviews.length + ' avis, ' + invoices.length + ' factures'); }
+
+        // ============ AUTRES ============
+        function selectPanne(service, price) { selectedService = service; selectedPrice = price; refreshUI(); }
+        function sendSOS() { 
+            showToast('SOS envoye !'); 
+            addNotification("URGENCE SOS", "SOS envoye avec votre position", "urgent"); 
+            shareLocation();
+        }
+
+        // ============ INITIALISATION ============
+        if (isDarkMode) document.body.classList.add('dark-mode');
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) { currentUser = JSON.parse(savedUser); refreshUI(); }
+        else { showLoginScreen(); }
+
+        // Exposer les fonctions globales
+        window.selectPanne = selectPanne;
+        window.callUrgent = callUrgent;
+        window.callMechanic = callMechanic;
+        window.acceptRequest = acceptRequest;
+        window.sendSOS = sendSOS;
+        window.showTrackingMap = showTrackingMap;
+        window.showChat = showChat;
+        window.showSupport = showSupport;
+        window.showPartsCatalog = showPartsCatalog;
+        window.showVerification = showVerification;
+        window.showPromotions = showPromotions;
+        window.showInvoices = showInvoices;
+        window.showNotifications = showNotifications;
+        window.showNotificationChat = showNotificationChat;
+        window.showReviews = showReviews;
+        window.showSecuritySettings = showSecuritySettings;
+        window.toggleDarkMode = toggleDarkMode;
+        window.setLanguage = setLanguage;
+        window.banUser = banUser;
+        window.approveUser = approveUser;
+        window.rejectUser = rejectUser;
+        window.exportData = exportData;
+        window.showAdminSection = showAdminSection;
+        window.showStats = showStats;
+        window.selectPaymentMethod = selectPaymentMethod;
+        window.processPayment = processPayment;
+        window.sendMessage = sendMessage;
+        window.setActiveChat = setActiveChat;
+        window.submitVerification = submitVerification;
+        window.applyPromo = applyPromo;
+        window.sendTicket = sendTicket;
+        window.checkoutCart = checkoutCart;
+        window.addToCart = addToCart;
+        window.downloadPDF = downloadPDF;
+        window.setRating = setRating;
+        window.submitReview = submitReview;
+        window.shareLocation = shareLocation;
+        window.quickAccess = quickAccess;
+        window.enableGuestMode = enableGuestMode;
+        window.markNotificationRead = markNotificationRead;
+        window.sendToAllDrivers = sendToAllDrivers;
+        window.sendToAllMechanics = sendToAllMechanics;
+        window.showMobileApp = showMobileApp;
+        window.syncCloudDatabase = syncCloudDatabase;
+        window.showDatabaseStatus = showDatabaseStatus;
+        window.restoreFromCloud = restoreFromCloud;
+        window.showPaymentAPIs = showPaymentAPIs;
+        window.activatePaymentAPI = activatePaymentAPI;
+        window.showVideoCall = showVideoCall;
+        window.showVoiceCall = showVoiceCall;
+        window.showPlateScanner = showPlateScanner;
+        window.scanPlate = scanPlate;
+        window.viewScannedPlate = viewScannedPlate;
+        window.showInsurance = showInsurance;
+        window.subscribeInsurance = subscribeInsurance;
+        window.showInsuranceClaim = showInsuranceClaim;
+        window.toggleTwoFactorForUser = toggleTwoFactorForUser;
+        window.addEmergencyContact = addEmergencyContact;
+        window.showRegisterScreen = showRegisterScreen;
+        window.register = register;
+        window.scanCNI = scanCNI;
+        window.showCNIHistory = showCNIHistory;
+        window.viewCNI = viewCNI;
+        window.sendVerificationCode = sendVerificationCode;
+        window.verifyCode = verifyCode;
+        window.showLoginScreen = showLoginScreen;
+        window.login = login;
+        window.logout = logout;
+        window.refreshUI = refreshUI;
+    </script>
+</body>
+</html>
